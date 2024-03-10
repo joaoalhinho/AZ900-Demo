@@ -38,6 +38,7 @@ resource "azurerm_network_interface_security_group_association" "Site1Server" {
   network_security_group_id = azurerm_network_security_group.Site1BSG.id
 }
 
+
 ######creating ubunu server site 1
 resource "azurerm_linux_virtual_machine" "Site1Server" {
   name                = "${var.prefix}Site1Server-vm"
