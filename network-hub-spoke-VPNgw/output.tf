@@ -17,3 +17,6 @@ output "Routes-add2" {
 }
 
 
+output "Setup-ClientVPN" {
+  value = "Import both PFX to your client and download the client VPN package."
+}

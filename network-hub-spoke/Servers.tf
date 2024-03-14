@@ -33,11 +33,6 @@ resource "azurerm_network_interface" "Site1Server" {
   }
 }
 
-resource "azurerm_network_interface_security_group_association" "Site1Server" {
-  network_interface_id      = azurerm_network_interface.Site1Server.id
-  network_security_group_id = azurerm_network_security_group.Site1BSG.id
-}
-
 
 ######creating ubunu server site 1
 resource "azurerm_linux_virtual_machine" "Site1Server" {
@@ -109,11 +104,6 @@ resource "azurerm_network_interface" "Site2Server" {
     private_ip_address_version    = "IPv4"
     public_ip_address_id          = azurerm_public_ip.Site2Server.id
   }
-}
-
-resource "azurerm_network_interface_security_group_association" "Site2Server" {
-  network_interface_id      = azurerm_network_interface.Site2Server.id
-  network_security_group_id = azurerm_network_security_group.Site2BSG.id
 }
 
 ######creating ubunu server site 1

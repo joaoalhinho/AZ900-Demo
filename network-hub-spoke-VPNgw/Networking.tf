@@ -78,14 +78,38 @@ resource "azurerm_network_security_group" "Site1BSG" {
   resource_group_name = azurerm_resource_group.Site1Net.name
 
   security_rule {
-    name                       = "SSH"
-    priority                   = 1010
+    name                       = "AllowVPNInboundICMP"
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Icmp"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "192.168.254.0/24"
+    destination_address_prefix = "*"
+  }
+
+   security_rule {
+    name                       = "AllowVPNInboundSSH"
+    priority                   = 201
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
+    source_address_prefix      = "192.168.254.0/24"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "BlockVPNInboundTraffic"
+    priority                   = 3000
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "192.168.254.0/24"
     destination_address_prefix = "*"
   }
 }
@@ -127,14 +151,38 @@ resource "azurerm_network_security_group" "Site2BSG" {
   resource_group_name = azurerm_resource_group.Site2Net.name
 
   security_rule {
-    name                       = "SSH"
-    priority                   = 1010
+    name                       = "AllowVPNInboundICMP"
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Icmp"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "192.168.254.0/24"
+    destination_address_prefix = "*"
+  }
+
+   security_rule {
+    name                       = "AllowVPNInboundSSH"
+    priority                   = 201
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
+    source_address_prefix      = "192.168.254.0/24"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "BlockVPNInboundTraffic"
+    priority                   = 3000
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "192.168.254.0/24"
     destination_address_prefix = "*"
   }
 }
