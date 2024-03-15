@@ -3,7 +3,7 @@ variable "prefix" {
 }
 
 variable "LocationCoreNet" {
-  default = "northeurope"
+  default = "westeurope"
 }
 
 variable "LocationSite1" {
