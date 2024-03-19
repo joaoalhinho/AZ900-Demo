@@ -22,7 +22,7 @@ resource "azurerm_lb" "WebApp" {
   resource_group_name = azurerm_resource_group.WebApp.name
 
   frontend_ip_configuration {
-    name                 = "ipconfig"
+    name                 = "frontendip"
     public_ip_address_id = azurerm_public_ip.WebApp.id
   }
 }
@@ -33,34 +33,54 @@ resource "azurerm_lb_backend_address_pool" "WebServer" {
 }
 
 resource "azurerm_lb_probe" "WebAppHTTP" {
-  resource_group_name = azurerm_resource_group.WebApp.name
-  loadbalancer_id     = azurerm_lb.WebApp.id
-  name                = "ssh-running-probe"
-  port                = 80
+  loadbalancer_id = azurerm_lb.WebApp.id
+  name            = "http-running-probe"
+  port            = 80
+}
+
+resource "azurerm_lb_probe" "WebAppSSH" {
+  loadbalancer_id = azurerm_lb.WebApp.id
+  name            = "ssh-running-probe"
+  port            = 22
 }
 
 resource "azurerm_lb_rule" "WebApp" {
-  resource_group_name            = azurerm_resource_group.WebApp.name
   loadbalancer_id                = azurerm_lb.WebApp.id
   name                           = "http"
   protocol                       = "Tcp"
   frontend_port                  = 80
   backend_port                   = 80
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.WebServer.id]
-  frontend_ip_configuration_name = "ipconfig"
+  frontend_ip_configuration_name = "frontendip"
   probe_id                       = azurerm_lb_probe.WebAppHTTP.id
 }
 
+resource "azurerm_lb_rule" "SSH" {
+  loadbalancer_id                = azurerm_lb.WebApp.id
+  name                           = "ssh"
+  protocol                       = "Tcp"
+  frontend_port                  = 8022
+  backend_port                   = 22
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.WebServer.id]
+  frontend_ip_configuration_name = "frontendip"
+  probe_id                       = azurerm_lb_probe.WebAppSSH.id
+}
+
 #creating VM scale set
+resource "azurerm_linux_virtual_machine_scale_set" "WebApp" {
+  name                            = "${var.prefix}WebApp-vmss"
+  resource_group_name             = azurerm_resource_group.WebApp.name
+  location                        = azurerm_resource_group.WebApp.location
+  sku                             = "Standard_B2als_v2"
+  instances                       = 3
+  admin_username                  = var.adminname
+  admin_password                  = var.adminpw
+  disable_password_authentication = false
 
-resource "azurerm_virtual_machine_scale_set" "WebApp" {
-  name                = "${var.prefix}WebApp-vm"
-  location            = azurerm_resource_group.WebApp.location
-  resource_group_name = azurerm_resource_group.WebApp.name
-
+  /*
   # automatic rolling upgrade
-  automatic_os_upgrade = true
-  upgrade_policy_mode  = "Rolling"
+  upgrade_mode = "manual"
+  health_probe_id = azurerm_lb_probe.WebAppHTTP.id
 
   rolling_upgrade_policy {
     max_batch_instance_percent              = 20
@@ -68,41 +88,20 @@ resource "azurerm_virtual_machine_scale_set" "WebApp" {
     max_unhealthy_upgraded_instance_percent = 5
     pause_time_between_batches              = "PT0S"
   }
+  */
 
-  # required when using rolling upgrade policy
-  health_probe_id = azurerm_lb_probe.WebAppHTTP.id
-
-  sku {
-    name     = "Standard_B2als_v2"
-    tier     = "Standard"
-    capacity = 3 #number of virtual machines
-  }
-
-  storage_profile_image_reference {
+  source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
     sku       = "22_04-lts"
     version   = "latest"
   }
-
-  storage_profile_os_disk {
-    name              = ""
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+  os_disk {
+    storage_account_type = "Standard_LRS"
+    caching              = "ReadWrite"
   }
 
-  os_profile {
-    computer_name_prefix = "${var.prefix}WebApp"
-    admin_username       = var.adminname
-    admin_password       = var.adminpw
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
-
-  network_profile {
+  network_interface {
     name    = "WebServerCluster"
     primary = true
 
